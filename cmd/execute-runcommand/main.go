@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	"gopkg.in/matryer/try.v1"
 )
 
 var instance_id []*string
@@ -81,6 +80,7 @@ var (
 	command    = "export container_id_nginx=$(sudo docker ps | grep nginx | awk  {'print $1'}) && echo ${container_id_nginx} && sudo docker stop ${container_id_nginx}"
 )
 
+// $hkgfe
 func main() {
 
 	input := ssm.SendCommandInput{
@@ -137,9 +137,9 @@ func main() {
 				os.Exit(2)
 			} else {
 				diskCheckOutput := aws.StringValue(resp.StandardOutputContent)
-			
-					fmt.Println(diskCheckOutput)
-					os.Exit(0)
+
+				fmt.Println(diskCheckOutput)
+				os.Exit(0)
 			}
 		}
 	}
