@@ -1,0 +1,98 @@
+name: push-sensu-assets-to-s3
+
+run-name: ${{ github.ref_name }}-${{ github.run_number }}
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'develop'
+
+jobs:
+  push-sensu-assets-amd64-to-s3:
+    concurrency:
+      group: push-sensu-assets-amd64-to-s3-${{ github.ref_name }}
+    runs-on: 'ubuntu-22.04'
+    steps:
+      - name: Checkout Sensu-Assets
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+
+      - name: Build Sensu-Go-Assets
+        run: |
+          mkdir bin
+          go build -o bin/ ./...
+        env:
+          GO111MODULE: "on"
+          GOOS: "linux"
+          GOARCH: "amd64"
+          CGO_ENABLED: "0"
+
+      - name: Create a tar package
+        run: tar -czf sensu-go-assets-amd64.tar.gz bin
+
+      - name: Upload sensu-go-assets-amd64 tar to s3
+        run: aws s3 cp sensu-go-assets-amd64.tar.gz s3://asutoshgha/asset/ --acl public-read
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-west-1
+
+      - name: Create Shasum for sensu-go-assets-amd64
+        run: sha512sum sensu-go-assets-amd64.tar.gz | tee sensu-go-assets-amd64.txt
+
+      - name: Important - Please Copy SHA512 checksum and update in sensu go runtime asset
+        run: |
+          echo -e '
+
+          ' && cat sensu-go-assets-amd64.txt && echo -e '
+
+          '
+
+  push-sensu-assets-arm64-to-s3:
+    concurrency:
+      group: push-sensu-assets-arm64-to-s3-${{ github.ref_name }}
+    runs-on: 'ubuntu-22.04'
+    steps:
+      - name: Checkout Sensu-Assets
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.19
+
+      - name: Build Sensu-Go-Assets
+        run: |
+          mkdir bin
+          go build -o bin/ ./...
+        env:
+          GO111MODULE: "on"
+          GOOS: "linux"
+          GOARCH: "arm64"
+          CGO_ENABLED: "0"
+
+      - name: Create a tar package
+        run: tar -czf sensu-go-assets-arm64.tar.gz bin
+
+      - name: Upload sensu-go-assets-arm64 tar to s3
+        run: aws s3 cp sensu-go-assets-arm64.tar.gz s3://asutoshgha/asset/ --acl public-read
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: eu-west-1
+
+      - name: Create Shasum for sensu-go-assets-arm64
+        run: sha512sum sensu-go-assets-arm64.tar.gz | tee sensu-go-assets-arm64.txt
+
+      - name: Important - Please Copy SHA512 checksum and update in sensu go runtime asset
+        run: |
+          echo -e '
+
+          ' && cat sensu-go-assets-arm64.txt && echo -e '
+
+          '
