@@ -5,8 +5,7 @@ run-name: ${{ github.ref_name }}-${{ github.run_number }}
 on:
   push:
     branches:
-      - 'master'
-      - 'develop'
+      - 'main'
 
 jobs:
   push-sensu-assets-amd64-to-s3:
