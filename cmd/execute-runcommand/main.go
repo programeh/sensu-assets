@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"gopkg.in/matryer/try.v1"
 )
 
 var instance_id []*string
