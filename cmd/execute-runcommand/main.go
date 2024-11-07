@@ -92,6 +92,7 @@ func handler(event types.Event) error {
 func main() {
 	// Read Sensu event data from stdin
 	var event types.Event
+	log.Printf("start Remediation")
 	if err := json.NewDecoder(os.Stdin).Decode(&event); err != nil {
 		log.Fatalf("Error decoding Sensu event: %v", err)
 	}
@@ -100,4 +101,6 @@ func main() {
 	if err := handler(event); err != nil {
 		log.Fatalf("Handler error: %v", err)
 	}
+
+	log.Printf("End Remediation")
 }
