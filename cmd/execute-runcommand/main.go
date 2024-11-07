@@ -78,7 +78,7 @@ var (
 			SharedConfigState: session.SharedConfigEnable,
 		}))
 	ssmSession = ssm.New(sess)
-	command    = "export container_id_nginx=$(sudo docker ps | grep nginx | awk  {'print $1'}) && echo ${container_id_nginx} && sudo docker stop ${container_id_nginx}"
+	command    = "export container_id_nginx=$(sudo docker ps | grep testrepo | awk  {'print $1'}) && echo ${container_id_nginx} && sudo docker stop ${container_id_nginx}"
 )
 
 // $hkgfe
@@ -88,7 +88,7 @@ func main() {
 		TimeoutSeconds: aws.Int64(300),
 		InstanceIds:    instance_id,
 		DocumentName:   aws.String("AWS-RunShellScript"),
-		Comment:        aws.String("Check Disk Errors in eventstore volume triggered by Sensu"),
+		Comment:        aws.String("Remidiation action"),
 	}
 	input.Parameters = map[string][]*string{
 		"commands":         aws.StringSlice([]string{command}),
