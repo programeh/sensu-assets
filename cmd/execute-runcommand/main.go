@@ -17,7 +17,7 @@ func getInstanceIDByIP(ec2Client *ec2.EC2, ipAddress string) (string, error) {
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			{
-				Name:   aws.String("private-ip-address"),
+				Name:   aws.String("private-dns-name"),
 				Values: []*string{aws.String(ipAddress)},
 			},
 		},
@@ -47,12 +47,14 @@ func handler(event types.Event) error {
 	// Extract annotations
 	var region string
 	labels := event.Entity.ObjectMeta.GetLabels()
+
 	if info, ok := labels[regionAnnotation]; !ok {
-		region = info
 		return fmt.Errorf("Error: Region not found in the map")
+	} else {
+		region = info
 	}
-	println(region)
 	ipAddress := event.Entity.System.Hostname
+	println(ipAddress)
 
 	// Initialize AWS session
 	sess, err := session.NewSession(&aws.Config{
