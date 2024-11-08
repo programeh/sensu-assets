@@ -38,23 +38,52 @@ func getInstanceIDByIP(ec2Client *ec2.EC2, ipAddress string) (string, error) {
 
 // SensuCheckAnnotation keys
 const (
-	regionAnnotation = "region"
-	containerName    = "testrepo" // Name of the container to restart
+	regionAnnotation        = "region"
+	runcommandSopAnnotation = "runcommand_sop_name"
 )
 
-// Handler function for parsing annotations and firing SSM command
-func handler(event types.Event) error {
-	// Extract annotations
+func GetRunCommandSopName(event types.Event) (string, error) {
+	annotations := event.Check.ObjectMeta.GetAnnotations()
+
+	var runcommandname string
+	if info, ok := annotations[runcommandSopAnnotation]; !ok {
+		return "", fmt.Errorf("Error: runcommand name  not found in the annotation")
+	} else {
+		runcommandname = info
+	}
+	return runcommandname, nil
+}
+
+func GetRegion(event types.Event) (string, error) {
 	var region string
 	labels := event.Entity.ObjectMeta.GetLabels()
 
 	if info, ok := labels[regionAnnotation]; !ok {
-		return fmt.Errorf("Error: Region not found in the map")
+		return "", fmt.Errorf("Error: Region not found in the map")
 	} else {
 		region = info
 	}
+	return region, nil
+}
+
+// Handler function for parsing annotations and firing SSM command
+func handler(event types.Event) error {
+	// Extract annotations
+
+	runcommandname, err := GetRunCommandSopName(event)
+	if err != nil {
+		return err
+	}
+
+	region, err := GetRegion(event)
+	if err != nil {
+		return err
+	}
+
 	ipAddress := event.Entity.System.Hostname
-	println(ipAddress)
+	if ipAddress != "" {
+		log.Println(ipAddress)
+	}
 
 	// Initialize AWS session
 	sess, err := session.NewSession(&aws.Config{
@@ -74,13 +103,10 @@ func handler(event types.Event) error {
 	ssmClient := ssm.New(sess)
 
 	// Define SSM command to restart container
-	command := fmt.Sprintf("export container_id_nginx=$(sudo docker ps | grep %s | awk  {'print $1'}) && echo ${container_id_nginx} && sudo docker stop ${container_id_nginx}", containerName)
+	//command := fmt.Sprintf("export container_id_nginx=$(sudo docker ps | grep %s | awk  {'print $1'}) && echo ${container_id_nginx} && sudo docker stop ${container_id_nginx}", containerName)
 	input := &ssm.SendCommandInput{
-		DocumentName: aws.String("AWS-RunShellScript"),
-		Parameters: map[string][]*string{
-			"commands": {aws.String(command)},
-		},
-		InstanceIds: []*string{aws.String(instanceID)},
+		DocumentName: aws.String(runcommandname),
+		InstanceIds:  []*string{aws.String(instanceID)},
 	}
 
 	// Execute SSM command
