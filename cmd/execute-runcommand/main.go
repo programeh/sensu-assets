@@ -51,10 +51,14 @@ func handler(event types.Event) error {
 		region = info
 		return fmt.Errorf("Error: Region not found in the map")
 	}
+	println(region)
 	ipAddress := event.Entity.System.Hostname
 
 	// Initialize AWS session
-	sess, err := session.NewSession(&aws.Config{Region: aws.String(region)})
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	},
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create AWS session: %w", err)
 	}
