@@ -8,8 +8,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -38,22 +38,20 @@ func getInstanceIDByIP(ec2Client *ec2.EC2, ipAddress string) (string, error) {
 
 // SensuCheckAnnotation keys
 const (
-	regionAnnotation  = "region"
-	ipAddressAnnotation = "ip_address"
-	containerName      = "testrepo" // Name of the container to restart
+	regionAnnotation = "region"
+	containerName    = "testrepo" // Name of the container to restart
 )
 
 // Handler function for parsing annotations and firing SSM command
 func handler(event types.Event) error {
 	// Extract annotations
-	region, ok := event.Check.Annotations[regionAnnotation]
-	if !ok {
-		return fmt.Errorf("missing %s annotation in check", regionAnnotation)
+	var region string
+	labels := event.Entity.ObjectMeta.GetLabels()
+	if info, ok := labels[regionAnnotation]; !ok {
+		region = info
+		return fmt.Errorf("Error: Region not found in the map")
 	}
-	ipAddress, ok := event.Check.Annotations[ipAddressAnnotation]
-	if !ok {
-		return fmt.Errorf("missing %s annotation in check", ipAddressAnnotation)
-	}
+	ipAddress := event.Entity.System.Hostname
 
 	// Initialize AWS session
 	sess, err := session.NewSession(&aws.Config{Region: aws.String(region)})
@@ -97,7 +95,6 @@ func main() {
 		log.Fatalf("Error decoding Sensu event: %v", err)
 	}
 
-	// Run the handler
 	if err := handler(event); err != nil {
 		log.Fatalf("Handler error: %v", err)
 	}
